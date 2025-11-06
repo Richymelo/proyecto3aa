@@ -765,8 +765,8 @@ void generar_latex(const char *filename) {
     fprintf(f, "\\usepackage{amsmath}\n");
     fprintf(f, "\\usepackage{xcolor}\n");
     fprintf(f, "\\geometry{a4paper, margin=2.5cm}\n");
-    fprintf(f, "\\title{Proyecto 3 - Análisis de Algoritmos}\n");
-    fprintf(f, "\\author{Grupo de Trabajo\\\\II Semestre 2025}\n");
+    fprintf(f, "\\title{Proyecto 3: Hamilton, Euler y Grafos, Parte I}\n");
+    fprintf(f, "\\author{Miembros del Grupo:\\\\Ricardo Castro\\\\Juan Carlos Valverde\\\\~\\\\Curso: Analisis de Algoritmos\\\\~\\\\Semestres: II 2025}\n");
     fprintf(f, "\\date{\\today}\n\n");
     fprintf(f, "\\begin{document}\n\n");
     
