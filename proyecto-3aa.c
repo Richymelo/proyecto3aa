@@ -978,39 +978,53 @@ void generar_latex(const char *filename) {
 
 void compilar_y_mostrar_pdf(const char *texfile) {
     char command[1024];
-    
-    // Compilar con pdflatex
-    snprintf(command, sizeof(command), "pdflatex -interaction=nonstopmode %s", texfile);
-    int result = system(command);
-    
-    if (result != 0) {
-        GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
-            GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-            "Error al compilar LaTeX. Verifique que pdflatex esté instalado.");
-        gtk_dialog_run(GTK_DIALOG(dialog));
-        gtk_widget_destroy(dialog);
-        return;
-    }
-    
-    // Compilar segunda vez para referencias
-    system(command);
-    
-    // Mostrar PDF
     char pdffile[1024];
+    
+    // Construir nombre del archivo PDF
     snprintf(pdffile, sizeof(pdffile), "%s", texfile);
     char *ext = strrchr(pdffile, '.');
     if (ext) *ext = '\0';
     strcat(pdffile, ".pdf");
     
-    char command_evince[2048];
-    snprintf(command_evince, sizeof(command_evince), "evince --presentation %s &", pdffile);
-    system(command_evince);
+    // Compilar con pdflatex (redirigir salida para mantener terminal limpia)
+    #ifdef _WIN32
+    snprintf(command, sizeof(command), "pdflatex -interaction=nonstopmode \"%s\" > NUL 2>&1", texfile);
+    #else
+    snprintf(command, sizeof(command), "pdflatex -interaction=nonstopmode \"%s\" > /dev/null 2>&1", texfile);
+    #endif
+    system(command);
     
-    GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
-        GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
-        "Documento LaTeX generado y compilado exitosamente.\nEl PDF se está mostrando en evince.");
-    gtk_dialog_run(GTK_DIALOG(dialog));
-    gtk_widget_destroy(dialog);
+    // Compilar segunda vez para referencias (redirigir salida)
+    system(command);
+    
+    // Verificar si el PDF se creó exitosamente
+    FILE *test_pdf = fopen(pdffile, "r");
+    if (test_pdf) {
+        fclose(test_pdf);
+        
+        // Intentar abrir el PDF (redirigir salida para mantener terminal limpia)
+        #ifdef _WIN32
+        char command_open[2048];
+        snprintf(command_open, sizeof(command_open), "start \"\" \"%s\"", pdffile);
+        system(command_open);
+        #else
+        char command_evince[2048];
+        snprintf(command_evince, sizeof(command_evince), "evince --presentation \"%s\" > /dev/null 2>&1 &", pdffile);
+        system(command_evince);
+        #endif
+        
+        GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
+            GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
+            "El PDF ha sido creado exitosamente.");
+        gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+    } else {
+        GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
+            GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+            "Error al compilar LaTeX. Verifique que pdflatex esté instalado y que el archivo .tex sea válido.");
+        gtk_dialog_run(GTK_DIALOG(dialog));
+        gtk_widget_destroy(dialog);
+    }
 }
 
 // Función principal
@@ -1021,7 +1035,12 @@ int main(int argc, char *argv[]) {
     // Cargar archivo Glade
     builder = gtk_builder_new_from_file(GLADE_FILE);
     if (!builder) {
-        g_error("No se pudo cargar el archivo Glade: %s", GLADE_FILE);
+        // Usar diálogo en lugar de g_error para no imprimir en terminal
+        GtkWidget *error_dialog = gtk_message_dialog_new(NULL,
+            GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
+            "No se pudo cargar el archivo Glade: %s", GLADE_FILE);
+        gtk_dialog_run(GTK_DIALOG(error_dialog));
+        gtk_widget_destroy(error_dialog);
         return 1;
     }
     
