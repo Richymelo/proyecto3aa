@@ -45,6 +45,8 @@ static GtkWidget *grid_posiciones;
 static GtkWidget *spin_num_nodes;
 static GtkWidget *radio_no_dirigido;
 static GtkWidget *radio_dirigido;
+static GtkWidget *scroll_matriz;
+static GtkWidget *notebook_main;
 static GtkEntry *matriz_entries[MAX_NODOS][MAX_NODOS];
 static GtkSpinButton *pos_x_spins[MAX_NODOS];
 static GtkSpinButton *pos_y_spins[MAX_NODOS];
@@ -80,11 +82,15 @@ bool posicion_duplicada(const Coordenada *posiciones, int K, int x, int y, int e
 
 // Callbacks de la interfaz
 void on_num_nodes_changed(GtkSpinButton *spinbutton, gpointer user_data) {
+    (void)spinbutton;
+    (void)user_data;
     // No hacer nada hasta que se presione "Aplicar"
 }
 
 void on_apply_nodes_clicked(GtkButton *button, gpointer user_data) {
-    int K = gtk_spin_button_get_value_as_int(spin_num_nodes);
+    (void)button;
+    (void)user_data;
+    int K = gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(spin_num_nodes));
     
     if (!validar_numero_nodos(K)) {
         GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
@@ -105,6 +111,8 @@ void on_apply_nodes_clicked(GtkButton *button, gpointer user_data) {
 }
 
 void on_tipo_grafo_changed(GtkToggleButton *togglebutton, gpointer user_data) {
+    (void)togglebutton;
+    (void)user_data;
     if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(radio_no_dirigido))) {
         grafo_actual.tipo = NO_DIRIGIDO;
     } else {
@@ -170,6 +178,8 @@ void actualizar_matriz_simetrica(int fila, int col) {
 }
 
 void on_save_clicked(GtkMenuItem *menuitem, gpointer user_data) {
+    (void)menuitem;
+    (void)user_data;
     if (num_nodos_actual == 0) {
         GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
             GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
@@ -215,6 +225,8 @@ void on_save_clicked(GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 void on_load_clicked(GtkMenuItem *menuitem, gpointer user_data) {
+    (void)menuitem;
+    (void)user_data;
     GtkWidget *dialog = gtk_file_chooser_dialog_new("Cargar Grafo",
         GTK_WINDOW(window_main), GTK_FILE_CHOOSER_ACTION_OPEN,
         "_Cancelar", GTK_RESPONSE_CANCEL,
@@ -234,7 +246,7 @@ void on_load_clicked(GtkMenuItem *menuitem, gpointer user_data) {
                 grafo_actual.tipo = (TipoGrafo)tipo;
                 num_nodos_actual = K;
                 
-                gtk_spin_button_set_value(spin_num_nodes, K);
+                gtk_spin_button_set_value(GTK_SPIN_BUTTON(spin_num_nodes), K);
                 if (tipo == NO_DIRIGIDO) {
                     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(radio_no_dirigido), TRUE);
                 } else {
@@ -287,10 +299,14 @@ void on_load_clicked(GtkMenuItem *menuitem, gpointer user_data) {
 }
 
 void on_quit_clicked(GtkMenuItem *menuitem, gpointer user_data) {
+    (void)menuitem;
+    (void)user_data;
     gtk_main_quit();
 }
 
 void on_clear_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+    (void)user_data;
     // Limpiar matriz
     for (int i = 0; i < num_nodos_actual; i++) {
         for (int j = 0; j < num_nodos_actual; j++) {
@@ -315,6 +331,8 @@ void on_clear_clicked(GtkButton *button, gpointer user_data) {
 }
 
 void on_generate_latex_clicked(GtkButton *button, gpointer user_data) {
+    (void)button;
+    (void)user_data;
     if (num_nodos_actual == 0) {
         GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
             GTK_DIALOG_MODAL, GTK_MESSAGE_WARNING, GTK_BUTTONS_OK,
@@ -399,16 +417,16 @@ void limpiar_posiciones() {
 void crear_matriz_ui(int K) {
     // Encabezados de fila
     for (int i = 0; i < K; i++) {
-        char label[10];
-        snprintf(label, 10, "%d", i);
+        char label[16];
+        snprintf(label, sizeof(label), "%d", i);
         GtkWidget *lbl = gtk_label_new(label);
         gtk_grid_attach(GTK_GRID(grid_matriz), lbl, 0, i + 1, 1, 1);
     }
     
     // Encabezados de columna
     for (int j = 0; j < K; j++) {
-        char label[10];
-        snprintf(label, 10, "%d", j);
+        char label[16];
+        snprintf(label, sizeof(label), "%d", j);
         GtkWidget *lbl = gtk_label_new(label);
         gtk_grid_attach(GTK_GRID(grid_matriz), lbl, j + 1, 0, 1, 1);
     }
@@ -440,6 +458,12 @@ void crear_matriz_ui(int K) {
     }
     
     gtk_widget_show_all(grid_matriz);
+    
+    // Forzar actualización del layout
+    if (scroll_matriz) {
+        gtk_widget_queue_resize(scroll_matriz);
+        gtk_widget_show_all(scroll_matriz);
+    }
 }
 
 void crear_posiciones_ui(int K) {
@@ -454,8 +478,8 @@ void crear_posiciones_ui(int K) {
     
     // SpinButtons para posiciones
     for (int i = 0; i < K; i++) {
-        char label[10];
-        snprintf(label, 10, "%d", i);
+        char label[16];
+        snprintf(label, sizeof(label), "%d", i);
         GtkWidget *lbl = gtk_label_new(label);
         gtk_grid_attach(GTK_GRID(grid_posiciones), lbl, 0, i + 1, 1, 1);
         
@@ -474,6 +498,13 @@ void crear_posiciones_ui(int K) {
     }
     
     gtk_widget_show_all(grid_posiciones);
+    
+    // Forzar actualización del layout
+    GtkWidget *scroll_posiciones = gtk_widget_get_parent(grid_posiciones);
+    if (scroll_posiciones) {
+        gtk_widget_queue_resize(scroll_posiciones);
+        gtk_widget_show_all(scroll_posiciones);
+    }
 }
 
 bool validar_posiciones() {
@@ -643,7 +674,6 @@ bool es_semieuleriano() {
         
         return nodos_grado_impar == 2;
     } else {
-        int nodos_diferencia = 0;
         int nodo_inicio = -1, nodo_fin = -1;
         
         for (int i = 0; i < K; i++) {
@@ -972,8 +1002,9 @@ void compilar_y_mostrar_pdf(const char *texfile) {
     if (ext) *ext = '\0';
     strcat(pdffile, ".pdf");
     
-    snprintf(command, sizeof(command), "evince --presentation %s &", pdffile);
-    system(command);
+    char command_evince[2048];
+    snprintf(command_evince, sizeof(command_evince), "evince --presentation %s &", pdffile);
+    system(command_evince);
     
     GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
         GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK,
@@ -1001,6 +1032,8 @@ int main(int argc, char *argv[]) {
     spin_num_nodes = GTK_WIDGET(gtk_builder_get_object(builder, "spin_num_nodes"));
     radio_no_dirigido = GTK_WIDGET(gtk_builder_get_object(builder, "radio_no_dirigido"));
     radio_dirigido = GTK_WIDGET(gtk_builder_get_object(builder, "radio_dirigido"));
+    scroll_matriz = GTK_WIDGET(gtk_builder_get_object(builder, "scroll_matriz"));
+    notebook_main = GTK_WIDGET(gtk_builder_get_object(builder, "notebook_main"));
     
     // Conectar señales
     gtk_builder_connect_signals(builder, NULL);

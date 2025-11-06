@@ -9,7 +9,7 @@ GLADE_FILE = proyecto-3aa.glade
 all: $(TARGET)
 
 $(TARGET): $(SOURCE) $(GLADE_FILE)
-	$(CC) $(CFLAGS) $(GTK_CFLAGS) -o $(TARGET) $(SOURCE) $(GTK_LIBS)
+	$(CC) $(CFLAGS) $(GTK_CFLAGS) -rdynamic -o $(TARGET) $(SOURCE) $(GTK_LIBS)
 
 clean:
 	rm -f $(TARGET) *.o *.tex *.aux *.log *.pdf *.out
@@ -27,4 +27,5 @@ install-deps:
 	fi
 
 .PHONY: all clean install-deps
+
 
