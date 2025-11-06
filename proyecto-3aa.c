@@ -1035,8 +1035,41 @@ int main(int argc, char *argv[]) {
     scroll_matriz = GTK_WIDGET(gtk_builder_get_object(builder, "scroll_matriz"));
     notebook_main = GTK_WIDGET(gtk_builder_get_object(builder, "notebook_main"));
     
-    // Conectar señales
-    gtk_builder_connect_signals(builder, NULL);
+    // Conectar señales manualmente
+    GtkWidget *btn_clear = GTK_WIDGET(gtk_builder_get_object(builder, "btn_clear"));
+    GtkWidget *btn_generate_latex = GTK_WIDGET(gtk_builder_get_object(builder, "btn_generate_latex"));
+    GtkWidget *btn_apply_nodes = GTK_WIDGET(gtk_builder_get_object(builder, "btn_apply_nodes"));
+    GtkWidget *menu_save = GTK_WIDGET(gtk_builder_get_object(builder, "menu_save"));
+    GtkWidget *menu_load = GTK_WIDGET(gtk_builder_get_object(builder, "menu_load"));
+    GtkWidget *menu_quit = GTK_WIDGET(gtk_builder_get_object(builder, "menu_quit"));
+    
+    if (btn_clear) {
+        g_signal_connect(btn_clear, "clicked", G_CALLBACK(on_clear_clicked), NULL);
+    }
+    if (btn_generate_latex) {
+        g_signal_connect(btn_generate_latex, "clicked", G_CALLBACK(on_generate_latex_clicked), NULL);
+    }
+    if (btn_apply_nodes) {
+        g_signal_connect(btn_apply_nodes, "clicked", G_CALLBACK(on_apply_nodes_clicked), NULL);
+    }
+    if (radio_no_dirigido) {
+        g_signal_connect(radio_no_dirigido, "toggled", G_CALLBACK(on_tipo_grafo_changed), NULL);
+    }
+    if (radio_dirigido) {
+        g_signal_connect(radio_dirigido, "toggled", G_CALLBACK(on_tipo_grafo_changed), NULL);
+    }
+    if (spin_num_nodes) {
+        g_signal_connect(spin_num_nodes, "value-changed", G_CALLBACK(on_num_nodes_changed), NULL);
+    }
+    if (menu_save) {
+        g_signal_connect(menu_save, "activate", G_CALLBACK(on_save_clicked), NULL);
+    }
+    if (menu_load) {
+        g_signal_connect(menu_load, "activate", G_CALLBACK(on_load_clicked), NULL);
+    }
+    if (menu_quit) {
+        g_signal_connect(menu_quit, "activate", G_CALLBACK(on_quit_clicked), NULL);
+    }
     
     // Inicializar grafo
     grafo_actual.K = 0;
