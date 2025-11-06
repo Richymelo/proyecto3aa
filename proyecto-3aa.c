@@ -1,10 +1,3 @@
-/*
- * Proyecto 3 - Análisis de Algoritmos
- * II Semestre 2025
- * 
- * Programa para análisis de grafos con detección de propiedades hamiltonianas y eulerianas
- * Genera documentos LaTeX con visualización del grafo
- */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +11,6 @@
 #define MAX_NODOS 12
 #define GLADE_FILE "proyecto-3aa.glade"
 
-// Estructuras de datos
 typedef enum {
     NO_DIRIGIDO,
     DIRIGIDO
@@ -30,13 +22,12 @@ typedef struct {
 } Coordenada;
 
 typedef struct {
-    int K;                              // Número de nodos (K)
-    TipoGrafo tipo;                     // Tipo de grafo
-    int matriz_adyacencia[MAX_NODOS][MAX_NODOS]; // Matriz KxK
-    Coordenada posiciones[MAX_NODOS];   // Posiciones relativas
+    int K;
+    TipoGrafo tipo;
+    int matriz_adyacencia[MAX_NODOS][MAX_NODOS];
+    Coordenada posiciones[MAX_NODOS];
 } Grafo;
 
-// Variables globales
 static Grafo grafo_actual;
 static GtkBuilder *builder;
 static GtkWidget *window_main;
@@ -52,7 +43,6 @@ static GtkSpinButton *pos_x_spins[MAX_NODOS];
 static GtkSpinButton *pos_y_spins[MAX_NODOS];
 static int num_nodos_actual = 0;
 
-// Prototipos de funciones
 void limpiar_matriz();
 void limpiar_posiciones();
 void crear_matriz_ui(int K);
@@ -66,7 +56,6 @@ bool es_semieuleriano();
 void generar_latex(const char *filename);
 void compilar_y_mostrar_pdf(const char *texfile);
 
-// Funciones de validación
 bool validar_numero_nodos(int k) {
     return k >= 1 && k <= MAX_NODOS;
 }
@@ -80,11 +69,9 @@ bool posicion_duplicada(const Coordenada *posiciones, int K, int x, int y, int e
     return false;
 }
 
-// Callbacks de la interfaz
 void on_num_nodes_changed(GtkSpinButton *spinbutton, gpointer user_data) {
     (void)spinbutton;
     (void)user_data;
-    // No hacer nada hasta que se presione "Aplicar"
 }
 
 void on_apply_nodes_clicked(GtkButton *button, gpointer user_data) {
@@ -119,7 +106,6 @@ void on_tipo_grafo_changed(GtkToggleButton *togglebutton, gpointer user_data) {
         grafo_actual.tipo = DIRIGIDO;
     }
     
-    // Si ya hay matriz, hacerla simétrica si es no dirigido
     if (num_nodos_actual > 0 && grafo_actual.tipo == NO_DIRIGIDO) {
         for (int i = 0; i < num_nodos_actual; i++) {
             for (int j = 0; j < num_nodos_actual; j++) {
@@ -158,12 +144,9 @@ void on_matriz_changed(GtkEditable *editable, gpointer user_data) {
     
     grafo_actual.matriz_adyacencia[fila][col] = valor;
     
-    // Si es no dirigido, hacer simétrica
     if (grafo_actual.tipo == NO_DIRIGIDO && fila != col) {
         actualizar_matriz_simetrica(fila, col);
     }
-    
-    // Nota: No liberar coords aquí, se liberará cuando se destruya el widget
 }
 
 void actualizar_matriz_simetrica(int fila, int col) {
@@ -268,7 +251,6 @@ void on_load_clicked(GtkMenuItem *menuitem, gpointer user_data) {
                 crear_matriz_ui(K);
                 crear_posiciones_ui(K);
                 
-                // Actualizar UI con valores cargados
                 for (int i = 0; i < K; i++) {
                     for (int j = 0; j < K; j++) {
                         if (matriz_entries[i][j]) {
@@ -307,7 +289,6 @@ void on_quit_clicked(GtkMenuItem *menuitem, gpointer user_data) {
 void on_clear_clicked(GtkButton *button, gpointer user_data) {
     (void)button;
     (void)user_data;
-    // Limpiar matriz
     for (int i = 0; i < num_nodos_actual; i++) {
         for (int j = 0; j < num_nodos_actual; j++) {
             grafo_actual.matriz_adyacencia[i][j] = 0;
@@ -317,7 +298,6 @@ void on_clear_clicked(GtkButton *button, gpointer user_data) {
         }
     }
     
-    // Limpiar posiciones
     for (int i = 0; i < num_nodos_actual; i++) {
         grafo_actual.posiciones[i].x = 0;
         grafo_actual.posiciones[i].y = 0;
@@ -342,7 +322,6 @@ void on_generate_latex_clicked(GtkButton *button, gpointer user_data) {
         return;
     }
     
-    // Leer posiciones actuales
     for (int i = 0; i < num_nodos_actual; i++) {
         if (pos_x_spins[i]) {
             grafo_actual.posiciones[i].x = gtk_spin_button_get_value_as_int(pos_x_spins[i]);
@@ -352,7 +331,6 @@ void on_generate_latex_clicked(GtkButton *button, gpointer user_data) {
         }
     }
     
-    // Validar posiciones
     if (!validar_posiciones()) {
         GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(window_main),
             GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
@@ -362,21 +340,17 @@ void on_generate_latex_clicked(GtkButton *button, gpointer user_data) {
         return;
     }
     
-    // Generar LaTeX
     generar_latex("proyecto-3aa.tex");
     compilar_y_mostrar_pdf("proyecto-3aa.tex");
 }
 
-// Funciones de UI
 void limpiar_matriz() {
     if (grid_matriz) {
-        // Obtener todos los hijos del grid
         GList *children = gtk_container_get_children(GTK_CONTAINER(grid_matriz));
         GList *iter;
         
         for (iter = children; iter != NULL; iter = iter->next) {
             GtkWidget *child = GTK_WIDGET(iter->data);
-            // Liberar datos de usuario si existen
             gpointer user_data = g_object_get_data(G_OBJECT(child), "coords");
             if (user_data) {
                 free(user_data);
@@ -396,7 +370,6 @@ void limpiar_matriz() {
 
 void limpiar_posiciones() {
     if (grid_posiciones) {
-        // Obtener todos los hijos del grid
         GList *children = gtk_container_get_children(GTK_CONTAINER(grid_posiciones));
         GList *iter;
         
@@ -415,7 +388,6 @@ void limpiar_posiciones() {
 }
 
 void crear_matriz_ui(int K) {
-    // Encabezados de fila
     for (int i = 0; i < K; i++) {
         char label[16];
         snprintf(label, sizeof(label), "%d", i);
@@ -423,7 +395,6 @@ void crear_matriz_ui(int K) {
         gtk_grid_attach(GTK_GRID(grid_matriz), lbl, 0, i + 1, 1, 1);
     }
     
-    // Encabezados de columna
     for (int j = 0; j < K; j++) {
         char label[16];
         snprintf(label, sizeof(label), "%d", j);
@@ -431,7 +402,6 @@ void crear_matriz_ui(int K) {
         gtk_grid_attach(GTK_GRID(grid_matriz), lbl, j + 1, 0, 1, 1);
     }
     
-    // Entradas de la matriz
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < K; j++) {
             GtkWidget *entry = gtk_entry_new();
@@ -459,7 +429,6 @@ void crear_matriz_ui(int K) {
     
     gtk_widget_show_all(grid_matriz);
     
-    // Forzar actualización del layout
     if (scroll_matriz) {
         gtk_widget_queue_resize(scroll_matriz);
         gtk_widget_show_all(scroll_matriz);
@@ -467,7 +436,6 @@ void crear_matriz_ui(int K) {
 }
 
 void crear_posiciones_ui(int K) {
-    // Encabezados
     GtkWidget *lbl_nodo = gtk_label_new("Nodo");
     GtkWidget *lbl_x = gtk_label_new("X");
     GtkWidget *lbl_y = gtk_label_new("Y");
@@ -476,7 +444,6 @@ void crear_posiciones_ui(int K) {
     gtk_grid_attach(GTK_GRID(grid_posiciones), lbl_x, 1, 0, 1, 1);
     gtk_grid_attach(GTK_GRID(grid_posiciones), lbl_y, 2, 0, 1, 1);
     
-    // SpinButtons para posiciones
     for (int i = 0; i < K; i++) {
         char label[16];
         snprintf(label, sizeof(label), "%d", i);
@@ -499,7 +466,6 @@ void crear_posiciones_ui(int K) {
     
     gtk_widget_show_all(grid_posiciones);
     
-    // Forzar actualización del layout
     GtkWidget *scroll_posiciones = gtk_widget_get_parent(grid_posiciones);
     if (scroll_posiciones) {
         gtk_widget_queue_resize(scroll_posiciones);
@@ -517,7 +483,6 @@ bool validar_posiciones() {
     return true;
 }
 
-// Algoritmos de grafos
 bool tiene_ciclo_hamiltoniano() {
     int K = grafo_actual.K;
     if (K < 3) return false;
@@ -525,22 +490,17 @@ bool tiene_ciclo_hamiltoniano() {
     int camino[K];
     bool visitado[K];
     
-    // Inicializar
     for (int i = 0; i < K; i++) {
         visitado[i] = false;
     }
     
-    // Función recursiva interna
     bool backtrack(int pos) {
         if (pos == K) {
-            // Verificar si hay arista del último al primero
             return grafo_actual.matriz_adyacencia[camino[K-1]][camino[0]] == 1;
         }
         
         for (int v = 0; v < K; v++) {
             if (!visitado[v]) {
-                // Si es el primer nodo, agregarlo directamente
-                // Si no, verificar que haya arista desde el último nodo del camino
                 if (pos == 0 || grafo_actual.matriz_adyacencia[camino[pos-1]][v] == 1) {
                     camino[pos] = v;
                     visitado[v] = true;
@@ -566,12 +526,10 @@ bool tiene_ruta_hamiltoniana() {
     int camino[K];
     bool visitado[K];
     
-    // Inicializar
     for (int i = 0; i < K; i++) {
         visitado[i] = false;
     }
     
-    // Función recursiva interna
     bool backtrack(int pos) {
         if (pos == K) {
             return true;
@@ -579,8 +537,6 @@ bool tiene_ruta_hamiltoniana() {
         
         for (int v = 0; v < K; v++) {
             if (!visitado[v]) {
-                // Si es el primer nodo, agregarlo directamente
-                // Si no, verificar que haya arista desde el último nodo del camino
                 if (pos == 0 || grafo_actual.matriz_adyacencia[camino[pos-1]][v] == 1) {
                     camino[pos] = v;
                     visitado[v] = true;
@@ -603,7 +559,6 @@ bool es_euleriano() {
     int K = grafo_actual.K;
     
     if (grafo_actual.tipo == NO_DIRIGIDO) {
-        // Verificar que sea conexo (simplificado: verificar que haya al menos una arista)
         bool tiene_aristas = false;
         for (int i = 0; i < K; i++) {
             for (int j = 0; j < K; j++) {
@@ -616,7 +571,6 @@ bool es_euleriano() {
         }
         if (!tiene_aristas) return false;
         
-        // Todos los nodos deben tener grado par
         for (int i = 0; i < K; i++) {
             int grado = 0;
             for (int j = 0; j < K; j++) {
@@ -630,7 +584,6 @@ bool es_euleriano() {
         }
         return true;
     } else {
-        // Para grafos dirigidos
         for (int i = 0; i < K; i++) {
             int grado_entrada = 0;
             int grado_salida = 0;
@@ -711,7 +664,6 @@ bool es_semieuleriano() {
     }
 }
 
-// Funciones de cálculo de grados para colores
 void calcular_grados_no_dirigido(int *grados) {
     int K = grafo_actual.K;
     for (int i = 0; i < K; i++) {
@@ -740,7 +692,6 @@ void calcular_grados_dirigido(int *grados_entrada, int *grados_salida) {
     }
 }
 
-// Generación de LaTeX
 void generar_latex(const char *filename) {
     FILE *f = fopen(filename, "w");
     if (!f) {
@@ -754,7 +705,6 @@ void generar_latex(const char *filename) {
     
     int K = grafo_actual.K;
     
-    // Preámbulo
     fprintf(f, "\\documentclass[12pt]{article}\n");
     fprintf(f, "\\usepackage[utf8]{inputenc}\n");
     fprintf(f, "\\usepackage[spanish]{babel}\n");
@@ -770,12 +720,10 @@ void generar_latex(const char *filename) {
     fprintf(f, "\\date{\\today}\n\n");
     fprintf(f, "\\begin{document}\n\n");
     
-    // Portada
     fprintf(f, "\\maketitle\n\n");
     fprintf(f, "\\thispagestyle{empty}\n\n");
     fprintf(f, "\\newpage\n\n");
     
-    // Hamilton
     fprintf(f, "\\section{William Rowan Hamilton}\n\n");
     fprintf(f, "William Rowan Hamilton (1805-1865) fue un matemático, físico y astrónomo irlandés. ");
     fprintf(f, "Hizo importantes contribuciones al desarrollo del álgebra, la óptica y la mecánica. ");
@@ -783,7 +731,6 @@ void generar_latex(const char *filename) {
     fprintf(f, "problema del ciclo hamiltoniano, que lleva su nombre. El problema consiste en ");
     fprintf(f, "encontrar un ciclo en un grafo que visite cada vértice exactamente una vez.\n\n");
     
-    // Ciclos y Rutas Hamiltonianas
     fprintf(f, "\\section{Ciclos y Rutas Hamiltonianas}\n\n");
     fprintf(f, "Un \\textbf{ciclo hamiltoniano} es un ciclo en un grafo que visita cada vértice ");
     fprintf(f, "exactamente una vez y regresa al vértice inicial. Una \\textbf{ruta hamiltoniana} ");
@@ -794,14 +741,12 @@ void generar_latex(const char *filename) {
     fprintf(f, "si existe al menos un ciclo o ruta hamiltoniana, aunque no se encuentra la solución ");
     fprintf(f, "específica.\n\n");
     
-    // Euler
     fprintf(f, "\\section{Leonhard Euler}\n\n");
     fprintf(f, "Leonhard Euler (1707-1783) fue un matemático y físico suizo considerado uno de los ");
     fprintf(f, "matemáticos más prolíficos de la historia. Realizó importantes descubrimientos en ");
     fprintf(f, "cálculo, teoría de grafos, teoría de números y muchas otras áreas. El problema de los ");
     fprintf(f, "puentes de Königsberg, que resolvió, es considerado el origen de la teoría de grafos.\n\n");
     
-    // Ciclos y Rutas Eulerianas
     fprintf(f, "\\section{Ciclos y Rutas Eulerianas}\n\n");
     fprintf(f, "Un \\textbf{ciclo euleriano} es un ciclo que recorre cada arista del grafo exactamente ");
     fprintf(f, "una vez y regresa al vértice inicial. Un \\textbf{camino euleriano} (o ruta euleriana) ");
@@ -818,10 +763,8 @@ void generar_latex(const char *filename) {
     fprintf(f, "en una unidad, y exactamente un vértice con grado de entrada mayor que el de salida ");
     fprintf(f, "en una unidad, y todos los demás tienen grados iguales.\n\n");
     
-    // Grafo original
     fprintf(f, "\\section{Grafo Original}\n\n");
     
-    // Calcular dimensiones para escalar
     int min_x = grafo_actual.posiciones[0].x;
     int max_x = grafo_actual.posiciones[0].x;
     int min_y = grafo_actual.posiciones[0].y;
@@ -838,11 +781,9 @@ void generar_latex(const char *filename) {
     double alto = (max_y - min_y > 0) ? (max_y - min_y) : 1.0;
     double escala = 12.0 / (ancho > alto ? ancho : alto);
     
-    // Dibujar grafo con TikZ
     fprintf(f, "\\begin{center}\n");
     fprintf(f, "\\begin{tikzpicture}[scale=%.2f]\n", escala);
     
-    // Dibujar aristas
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < K; j++) {
             if (grafo_actual.matriz_adyacencia[i][j] == 1) {
@@ -854,7 +795,7 @@ void generar_latex(const char *filename) {
                 if (grafo_actual.tipo == DIRIGIDO) {
                     fprintf(f, "\\draw[->, thick] (%.2f,%.2f) -- (%.2f,%.2f);\n", x1, y1, x2, y2);
                 } else {
-                    if (i < j) { // Dibujar solo una vez para no dirigidos
+                    if (i < j) {
                         fprintf(f, "\\draw[thick] (%.2f,%.2f) -- (%.2f,%.2f);\n", x1, y1, x2, y2);
                     }
                 }
@@ -862,7 +803,6 @@ void generar_latex(const char *filename) {
         }
     }
     
-    // Dibujar nodos con colores
     int grados[MAX_NODOS];
     int grados_entrada[MAX_NODOS];
     int grados_salida[MAX_NODOS];
@@ -878,13 +818,11 @@ void generar_latex(const char *filename) {
         double y = grafo_actual.posiciones[i].y - min_y;
         
         if (grafo_actual.tipo == NO_DIRIGIDO) {
-            // 2 colores: par (white) e impar (black)
             const char *color = (grados[i] % 2 == 0) ? "white" : "black!80";
             const char *text_color = (grados[i] % 2 == 0) ? "black" : "white";
             fprintf(f, "\\node[circle, draw=black, fill=%s, minimum size=0.8cm, font=\\scriptsize, text=%s] (n%d) at (%.2f,%.2f) {%d};\n",
                 color, text_color, i, x, y, i);
         } else {
-            // 4 colores según paridad de entrada y salida
             const char *color;
             int ent_par = (grados_entrada[i] % 2 == 0) ? 1 : 0;
             int sal_par = (grados_salida[i] % 2 == 0) ? 1 : 0;
@@ -902,7 +840,6 @@ void generar_latex(const char *filename) {
     fprintf(f, "\\end{tikzpicture}\n");
     fprintf(f, "\\end{center}\n\n");
     
-    // Leyenda de colores
     fprintf(f, "\\subsection{Leyenda de Colores}\n\n");
     if (grafo_actual.tipo == NO_DIRIGIDO) {
         fprintf(f, "\\begin{itemize}\n");
@@ -918,7 +855,6 @@ void generar_latex(const char *filename) {
         fprintf(f, "\\end{itemize}\n\n");
     }
     
-    // Propiedades del grafo
     fprintf(f, "\\section{Propiedades del Grafo}\n\n");
     
     bool tiene_ciclo = tiene_ciclo_hamiltoniano();
@@ -980,29 +916,23 @@ void compilar_y_mostrar_pdf(const char *texfile) {
     char command[1024];
     char pdffile[1024];
     
-    // Construir nombre del archivo PDF
     snprintf(pdffile, sizeof(pdffile), "%s", texfile);
     char *ext = strrchr(pdffile, '.');
     if (ext) *ext = '\0';
     strcat(pdffile, ".pdf");
     
-    // Compilar con pdflatex (redirigir salida para mantener terminal limpia)
     #ifdef _WIN32
     snprintf(command, sizeof(command), "pdflatex -interaction=nonstopmode \"%s\" > NUL 2>&1", texfile);
     #else
     snprintf(command, sizeof(command), "pdflatex -interaction=nonstopmode \"%s\" > /dev/null 2>&1", texfile);
     #endif
     system(command);
-    
-    // Compilar segunda vez para referencias (redirigir salida)
     system(command);
     
-    // Verificar si el PDF se creó exitosamente
     FILE *test_pdf = fopen(pdffile, "r");
     if (test_pdf) {
         fclose(test_pdf);
         
-        // Intentar abrir el PDF (redirigir salida para mantener terminal limpia)
         #ifdef _WIN32
         char command_open[2048];
         snprintf(command_open, sizeof(command_open), "start \"\" \"%s\"", pdffile);
@@ -1027,15 +957,11 @@ void compilar_y_mostrar_pdf(const char *texfile) {
     }
 }
 
-// Función principal
 int main(int argc, char *argv[]) {
-    // Inicializar GTK
     gtk_init(&argc, &argv);
     
-    // Cargar archivo Glade
     builder = gtk_builder_new_from_file(GLADE_FILE);
     if (!builder) {
-        // Usar diálogo en lugar de g_error para no imprimir en terminal
         GtkWidget *error_dialog = gtk_message_dialog_new(NULL,
             GTK_DIALOG_MODAL, GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
             "No se pudo cargar el archivo Glade: %s", GLADE_FILE);
@@ -1044,7 +970,6 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     
-    // Obtener widgets principales
     window_main = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
     grid_matriz = GTK_WIDGET(gtk_builder_get_object(builder, "grid_matriz"));
     grid_posiciones = GTK_WIDGET(gtk_builder_get_object(builder, "grid_posiciones"));
@@ -1054,7 +979,6 @@ int main(int argc, char *argv[]) {
     scroll_matriz = GTK_WIDGET(gtk_builder_get_object(builder, "scroll_matriz"));
     notebook_main = GTK_WIDGET(gtk_builder_get_object(builder, "notebook_main"));
     
-    // Conectar señales manualmente
     GtkWidget *btn_clear = GTK_WIDGET(gtk_builder_get_object(builder, "btn_clear"));
     GtkWidget *btn_generate_latex = GTK_WIDGET(gtk_builder_get_object(builder, "btn_generate_latex"));
     GtkWidget *btn_apply_nodes = GTK_WIDGET(gtk_builder_get_object(builder, "btn_apply_nodes"));
@@ -1090,7 +1014,6 @@ int main(int argc, char *argv[]) {
         g_signal_connect(menu_quit, "activate", G_CALLBACK(on_quit_clicked), NULL);
     }
     
-    // Inicializar grafo
     grafo_actual.K = 0;
     grafo_actual.tipo = NO_DIRIGIDO;
     memset(grafo_actual.matriz_adyacencia, 0, sizeof(grafo_actual.matriz_adyacencia));
@@ -1099,13 +1022,8 @@ int main(int argc, char *argv[]) {
     memset(pos_x_spins, 0, sizeof(pos_x_spins));
     memset(pos_y_spins, 0, sizeof(pos_y_spins));
     
-    // Mostrar ventana
     gtk_widget_show_all(window_main);
-    
-    // Liberar builder
     g_object_unref(builder);
-    
-    // Ejecutar loop principal
     gtk_main();
     
     return 0;
